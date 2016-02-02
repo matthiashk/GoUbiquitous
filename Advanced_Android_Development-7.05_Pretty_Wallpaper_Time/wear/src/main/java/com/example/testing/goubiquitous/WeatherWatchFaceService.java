@@ -1,10 +1,13 @@
 package com.example.testing.goubiquitous;
 
 import android.content.res.Resources;
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.support.wearable.watchface.CanvasWatchFaceService;
 import android.text.format.Time;
 import android.view.SurfaceHolder;
@@ -13,6 +16,9 @@ import android.view.SurfaceHolder;
  * Created by matthiasko on 2/1/16.
  */
 public class WeatherWatchFaceService extends CanvasWatchFaceService {
+
+    protected Resources mResources;
+    protected Bitmap mWeatherConditionDrawable;
 
     @Override
     public Engine onCreateEngine() {
@@ -27,9 +33,13 @@ public class WeatherWatchFaceService extends CanvasWatchFaceService {
         Time mTime;
         Paint mBackgroundPaint;
 
+        Paint mDatePaint;
+
         @Override
         public void onCreate(SurfaceHolder holder) {
             super.onCreate(holder);
+
+            mResources = WeatherWatchFaceService.this.getResources();
 
             // Create the Paint for later use
             mTextPaint = new Paint();
@@ -46,10 +56,26 @@ public class WeatherWatchFaceService extends CanvasWatchFaceService {
             mBackgroundPaint.setColor(resources.getColor(R.color.background));
 
             mTime = new Time();
+
+            mDatePaint = new Paint();
+            mDatePaint.setTextSize(20);
+            mDatePaint.setColor(Color.WHITE);
+            mDatePaint.setAntiAlias(true);
+
+
+
+
         }
 
         @Override
         public void onDraw(Canvas canvas, Rect bounds) {
+
+            int width = bounds.width();
+            int height = bounds.height();
+            float radius = width / 2;
+            float yOffset;
+
+            yOffset = 0;
 
             canvas.drawRect(0, 0, bounds.width(), bounds.height(), mBackgroundPaint);
 
@@ -58,13 +84,30 @@ public class WeatherWatchFaceService extends CanvasWatchFaceService {
             String text = String.format("%d:%02d", mTime.hour, mTime.minute);
             canvas.drawText(text, bounds.centerX() - mTextXOffset, bounds.centerY() - mTextYOffset, mTextPaint);
 
-            /*
-            canvas.drawText("12:00",
-                    bounds.centerX() - mTextXOffset,
-                    bounds.centerY() - mTextYOffset,
-                    mTextPaint);
-                    */
+            String myDate = "MON, FEB / 01 / 2016";
 
-        }
+            // TODO: fix position
+            canvas.drawText(myDate, bounds.centerX() - mTextXOffset - 40, bounds.centerY() - mTextYOffset + 30, mDatePaint);
+
+
+            // check if name is right
+
+            StringBuilder stringBuilder = new StringBuilder();
+
+            stringBuilder.append("art_clear");
+
+            String name = stringBuilder.toString();
+
+            //int id = mResources.getIdentifier(name, "drawable", "com.example.android.sunshine.app"); // check if this is right
+
+            Drawable b = mResources.getDrawable(R.drawable.art_clear);
+            mWeatherConditionDrawable = ((BitmapDrawable) b).getBitmap();
+            float sizeScale = (width * 0.5f) / mWeatherConditionDrawable.getWidth();
+            mWeatherConditionDrawable = Bitmap.createScaledBitmap(mWeatherConditionDrawable, (int) (mWeatherConditionDrawable.getWidth() * sizeScale), (int) (mWeatherConditionDrawable.getHeight() * sizeScale), true);
+
+            canvas.drawBitmap(mWeatherConditionDrawable, radius - mWeatherConditionDrawable.getWidth() / 2, 0 - yOffset, null);
+
+
+    }
     }
 }
