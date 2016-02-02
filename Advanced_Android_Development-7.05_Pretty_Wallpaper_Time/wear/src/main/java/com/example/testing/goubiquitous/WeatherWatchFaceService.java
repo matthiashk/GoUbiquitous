@@ -35,6 +35,8 @@ public class WeatherWatchFaceService extends CanvasWatchFaceService {
 
         Paint mDatePaint;
 
+        Paint mHighLow;
+
         @Override
         public void onCreate(SurfaceHolder holder) {
             super.onCreate(holder);
@@ -62,8 +64,10 @@ public class WeatherWatchFaceService extends CanvasWatchFaceService {
             mDatePaint.setColor(Color.WHITE);
             mDatePaint.setAntiAlias(true);
 
-
-
+            mHighLow = new Paint();
+            mHighLow.setTextSize(30);
+            mHighLow.setColor(Color.WHITE);
+            mHighLow.setAntiAlias(true);
 
         }
 
@@ -82,15 +86,11 @@ public class WeatherWatchFaceService extends CanvasWatchFaceService {
             mTime.setToNow();
 
             String text = String.format("%d:%02d", mTime.hour, mTime.minute);
-            canvas.drawText(text, bounds.centerX() - mTextXOffset, bounds.centerY() - mTextYOffset, mTextPaint);
+            canvas.drawText(text, bounds.centerX() - mTextXOffset, bounds.centerY() - mTextYOffset - 80, mTextPaint);
 
             String myDate = "MON, FEB / 01 / 2016";
+            canvas.drawText(myDate, bounds.centerX() - mTextXOffset - 40, bounds.centerY() - mTextYOffset - 40, mDatePaint);
 
-            // TODO: fix position
-            canvas.drawText(myDate, bounds.centerX() - mTextXOffset - 40, bounds.centerY() - mTextYOffset + 30, mDatePaint);
-
-
-            // check if name is right
 
             StringBuilder stringBuilder = new StringBuilder();
 
@@ -102,12 +102,15 @@ public class WeatherWatchFaceService extends CanvasWatchFaceService {
 
             Drawable b = mResources.getDrawable(R.drawable.art_clear);
             mWeatherConditionDrawable = ((BitmapDrawable) b).getBitmap();
-            float sizeScale = (width * 0.5f) / mWeatherConditionDrawable.getWidth();
+            float sizeScale = (width * 0.25f) / mWeatherConditionDrawable.getWidth(); // change size of image here
             mWeatherConditionDrawable = Bitmap.createScaledBitmap(mWeatherConditionDrawable, (int) (mWeatherConditionDrawable.getWidth() * sizeScale), (int) (mWeatherConditionDrawable.getHeight() * sizeScale), true);
 
-            canvas.drawBitmap(mWeatherConditionDrawable, radius - mWeatherConditionDrawable.getWidth() / 2, 0 - yOffset, null);
+            canvas.drawBitmap(mWeatherConditionDrawable, radius - mWeatherConditionDrawable.getWidth() / 2 - 50 , 0 - yOffset + 150, null);
 
+            String highLowString = "15 / 32";
 
-    }
+            canvas.drawText(highLowString, radius - mWeatherConditionDrawable.getWidth() / 2 + 50 , 0 - yOffset + 200, mHighLow);
+
+        }
     }
 }
