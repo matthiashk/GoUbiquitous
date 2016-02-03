@@ -1,4 +1,4 @@
-package com.example.testing.goubiquitous;
+package com.example.android.sunshine.app;
 
 import android.content.res.Resources;
 import android.graphics.Bitmap;
@@ -50,7 +50,7 @@ public class WeatherWatchFaceService extends CanvasWatchFaceService {
         public void onCreate(SurfaceHolder holder) {
             super.onCreate(holder);
 
-            System.out.println("onCreate **********************");
+            //System.out.println("onCreate **********************");
 
             // Create a GoogleApiClient instance
             mGoogleApiClient = new GoogleApiClient.Builder(WeatherWatchFaceService.this)
@@ -93,7 +93,7 @@ public class WeatherWatchFaceService extends CanvasWatchFaceService {
         @Override
         public void onDraw(Canvas canvas, Rect bounds) {
 
-            System.out.println("onDraw **********************");
+            //System.out.println("onDraw **********************");
 
 
             int width = bounds.width();
