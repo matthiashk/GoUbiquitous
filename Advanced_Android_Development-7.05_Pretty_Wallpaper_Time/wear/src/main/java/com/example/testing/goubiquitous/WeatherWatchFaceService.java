@@ -8,9 +8,14 @@ import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.os.Bundle;
 import android.support.wearable.watchface.CanvasWatchFaceService;
 import android.text.format.Time;
 import android.view.SurfaceHolder;
+
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.wearable.Wearable;
 
 /**
  * Created by matthiasko on 2/1/16.
@@ -25,7 +30,11 @@ public class WeatherWatchFaceService extends CanvasWatchFaceService {
         return new Engine();
     }
 
-    private class Engine extends CanvasWatchFaceService.Engine {
+    private class Engine extends CanvasWatchFaceService.Engine
+            implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
+
+        private GoogleApiClient mGoogleApiClient;
+
         Paint mTextPaint;
         Float mTextXOffset;
         Float mTextYOffset;
@@ -40,6 +49,16 @@ public class WeatherWatchFaceService extends CanvasWatchFaceService {
         @Override
         public void onCreate(SurfaceHolder holder) {
             super.onCreate(holder);
+
+            System.out.println("onCreate **********************");
+
+            // Create a GoogleApiClient instance
+            mGoogleApiClient = new GoogleApiClient.Builder(WeatherWatchFaceService.this)
+                    // Request access only to the Wearable API
+                    .addApi(Wearable.API)
+                    .addConnectionCallbacks(this)
+                    .addOnConnectionFailedListener(this)
+                    .build();
 
             mResources = WeatherWatchFaceService.this.getResources();
 
@@ -73,6 +92,9 @@ public class WeatherWatchFaceService extends CanvasWatchFaceService {
 
         @Override
         public void onDraw(Canvas canvas, Rect bounds) {
+
+            System.out.println("onDraw **********************");
+
 
             int width = bounds.width();
             int height = bounds.height();
@@ -110,6 +132,39 @@ public class WeatherWatchFaceService extends CanvasWatchFaceService {
             String highLowString = "15 / 32";
 
             canvas.drawText(highLowString, radius - mWeatherConditionDrawable.getWidth() / 2 + 50 , 0 - yOffset + 200, mHighLow);
+
+        }
+
+        @Override
+        public void onConnected(Bundle connectionHint) {
+            // Connected to Google Play services!
+            // The good stuff goes here.
+        }
+
+        @Override
+        public void onConnectionSuspended(int cause) {
+            // The connection has been interrupted.
+            // Disable any UI components that depend on Google APIs
+            // until onConnected() is called.
+        }
+
+        @Override
+        public void onConnectionFailed(ConnectionResult result) {
+            // This callback is important for handling errors that
+            // may occur while attempting to connect with Google.
+            //
+            // More about this in the 'Handle Connection Failures' section.
+        }
+
+        @Override
+        public void onVisibilityChanged(boolean visible) {
+            super.onVisibilityChanged(visible);
+
+            if (visible) {
+
+                System.out.println("onVisibilityChanged");
+            }
+
 
         }
     }
