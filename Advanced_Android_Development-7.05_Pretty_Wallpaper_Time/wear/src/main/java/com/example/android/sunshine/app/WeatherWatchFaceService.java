@@ -1,5 +1,9 @@
 package com.example.android.sunshine.app;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -9,6 +13,7 @@ import android.graphics.Rect;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.wearable.watchface.CanvasWatchFaceService;
 import android.text.format.Time;
 import android.view.SurfaceHolder;
@@ -45,6 +50,28 @@ public class WeatherWatchFaceService extends CanvasWatchFaceService {
         Paint mDatePaint;
 
         Paint mHighLow;
+
+        String mHighLowString;
+
+
+
+        public class MessageReceiver extends BroadcastReceiver {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                String message = intent.getStringExtra("message");
+                // Display message in UI
+                //mTextView.setText(message);
+
+                mHighLowString = message;
+
+                invalidate(); // call onDraw to refresh display
+
+                System.out.println("message = " + message);
+            }
+        }
+
+
+
 
         @Override
         public void onCreate(SurfaceHolder holder) {
@@ -88,6 +115,16 @@ public class WeatherWatchFaceService extends CanvasWatchFaceService {
             mHighLow.setColor(Color.WHITE);
             mHighLow.setAntiAlias(true);
 
+            mHighLowString = "15 / 32";
+
+
+
+            // register for messages from the mobile app
+            IntentFilter messageFilter = new IntentFilter(Intent.ACTION_SEND);
+            MessageReceiver messageReceiver = new MessageReceiver();
+
+            LocalBroadcastManager.getInstance(WeatherWatchFaceService.this).registerReceiver(messageReceiver, messageFilter);
+
         }
 
         @Override
@@ -129,9 +166,10 @@ public class WeatherWatchFaceService extends CanvasWatchFaceService {
 
             canvas.drawBitmap(mWeatherConditionDrawable, radius - mWeatherConditionDrawable.getWidth() / 2 - 50 , 0 - yOffset + 150, null);
 
-            String highLowString = "15 / 32";
+            // TODO: we need to update this text...
 
-            canvas.drawText(highLowString, radius - mWeatherConditionDrawable.getWidth() / 2 + 50 , 0 - yOffset + 200, mHighLow);
+
+            canvas.drawText(mHighLowString, radius - mWeatherConditionDrawable.getWidth() / 2 + 50 , 0 - yOffset + 200, mHighLow);
 
         }
 

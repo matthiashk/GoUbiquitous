@@ -50,6 +50,8 @@ public class Handheld extends Activity implements
 
         String WEARABLE_DATA_PATH = "/wearable_data";
 
+        // TODO: send high low data here...
+
         // Create a DataMap object and send it to the data layer
         DataMap dataMap = new DataMap();
         dataMap.putLong("time", new Date().getTime());
@@ -57,6 +59,7 @@ public class Handheld extends Activity implements
         dataMap.putString("front", "250");
         dataMap.putString("middle", "260");
         dataMap.putString("back", "270");
+
         //Requires a new thread to avoid blocking the UI
         new SendToDataLayerThread(WEARABLE_DATA_PATH, dataMap).start();
     }
