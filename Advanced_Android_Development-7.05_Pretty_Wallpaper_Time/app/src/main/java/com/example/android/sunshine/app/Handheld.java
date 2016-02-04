@@ -1,6 +1,6 @@
 package com.example.android.sunshine.app;
 
-import android.app.Activity;
+import android.content.Context;
 import android.os.Bundle;
 import android.util.Log;
 
@@ -12,36 +12,53 @@ import com.google.android.gms.wearable.PutDataMapRequest;
 import com.google.android.gms.wearable.PutDataRequest;
 import com.google.android.gms.wearable.Wearable;
 
-import java.util.Date;
-
 /**
  * Created by matthiasko on 2/2/16.
  */
-public class Handheld extends Activity implements
+public class Handheld implements
         GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener {
 
-    GoogleApiClient googleClient;
+    private GoogleApiClient googleClient;
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        //setContentView(R.layout.activity_handheld);
+    String mHighTemp;
+    String mLowTemp;
 
-        // Build a new GoogleApiClient
-        googleClient = new GoogleApiClient.Builder(this)
+
+
+    public Handheld(Context context) {
+
+        googleClient = new GoogleApiClient.Builder(context)
                 .addApi(Wearable.API)
                 .addConnectionCallbacks(this)
                 .addOnConnectionFailedListener(this)
                 .build();
+
+        googleClient.connect();
+
+        /* where should we disconnect?
+
+        if (null != googleClient && googleClient.isConnected()) {
+            googleClient.disconnect();
+        }
+         */
+
     }
 
-    // Connect to the data layer when the Activity starts
-    @Override
-    protected void onStart() {
-        super.onStart();
-        googleClient.connect();
+
+
+    public void updateHighLow(String highTemp, String lowTemp) {
+
+
+        mHighTemp = highTemp;
+        mLowTemp = lowTemp;
+
+        System.out.println("Handheld - highTemp = " + highTemp);
+        System.out.println("Handheld - lowTemp = " + lowTemp);
     }
+
+
+
 
     // Send a data object when the data layer connection is successful.
 
@@ -54,24 +71,21 @@ public class Handheld extends Activity implements
 
         // Create a DataMap object and send it to the data layer
         DataMap dataMap = new DataMap();
+        dataMap.putString("high", mHighTemp);
+        dataMap.putString("low", mLowTemp);
+
+        /*
         dataMap.putLong("time", new Date().getTime());
         dataMap.putString("hole", "1");
         dataMap.putString("front", "250");
         dataMap.putString("middle", "260");
         dataMap.putString("back", "270");
+        */
 
         //Requires a new thread to avoid blocking the UI
         new SendToDataLayerThread(WEARABLE_DATA_PATH, dataMap).start();
     }
 
-    // Disconnect from the data layer when the Activity stops
-    @Override
-    protected void onStop() {
-        if (null != googleClient && googleClient.isConnected()) {
-            googleClient.disconnect();
-        }
-        super.onStop();
-    }
 
     // Placeholders for required connection callbacks
     @Override
@@ -106,7 +120,7 @@ public class Handheld extends Activity implements
                 Log.v("myTag", "ERROR: failed to send DataMap to data layer");
             }
 
-            finish(); // exit the activity
+
         }
     }
 

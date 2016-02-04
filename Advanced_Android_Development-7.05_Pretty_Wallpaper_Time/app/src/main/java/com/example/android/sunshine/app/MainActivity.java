@@ -108,10 +108,16 @@ public class MainActivity extends AppCompatActivity implements ForecastFragment.
             }
         }
 
-        // start handheld activity
-        Intent intent = new Intent(this, Handheld.class);
 
-        startActivity(intent);
+
+
+        // start handheld activity
+        //Intent intent = new Intent(this, Handheld.class);
+        //startActivity(intent);
+
+
+
+
 
     }
 

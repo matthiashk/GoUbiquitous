@@ -32,9 +32,19 @@ public class ListenerService extends WearableListenerService {
                 dataMap = DataMapItem.fromDataItem(event.getDataItem()).getDataMap();
                 Log.v("myTag", "DataMap received on watch: " + dataMap);
 
+                String highTemp = dataMap.getString("high");
+                String lowTemp = dataMap.getString("low");
+
+                String highLowTemp = highTemp + "/" + lowTemp;
+
+
+                //System.out.println("ListenerService - highTemp = " + highTemp);
+
+                // get high and low temp and put in message intent so we can update ui
+
                 Intent messageIntent = new Intent();
                 messageIntent.setAction(Intent.ACTION_SEND);
-                messageIntent.putExtra("message", dataMap.toString());
+                messageIntent.putExtra("message", highLowTemp);
                 LocalBroadcastManager.getInstance(this).sendBroadcast(messageIntent);
             }
         }

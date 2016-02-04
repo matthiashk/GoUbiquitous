@@ -31,6 +31,7 @@ import android.util.Log;
 
 import com.bumptech.glide.Glide;
 import com.example.android.sunshine.app.BuildConfig;
+import com.example.android.sunshine.app.Handheld;
 import com.example.android.sunshine.app.MainActivity;
 import com.example.android.sunshine.app.R;
 import com.example.android.sunshine.app.Utility;
@@ -356,6 +357,7 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
                 updateWidgets();
                 updateMuzei();
                 notifyWeather();
+                getHighLow();
             }
             Log.d(LOG_TAG, "Sync Complete. " + cVVector.size() + " Inserted");
             setLocationStatus(getContext(), LOCATION_STATUS_OK);
@@ -383,6 +385,54 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
             context.startService(new Intent(ACTION_DATA_UPDATED)
                     .setClass(context, WeatherMuzeiSource.class));
         }
+    }
+
+    /*
+        Get high and low temperatures for the Android Wear app
+
+
+     */
+
+    private void getHighLow() {
+
+        System.out.println("getHighLow ******************");
+
+        Context context = getContext();
+
+        String locationQuery = Utility.getPreferredLocation(context);
+
+        Uri weatherUri = WeatherContract.WeatherEntry.buildWeatherLocationWithDate(locationQuery, System.currentTimeMillis());
+
+        // we'll query our contentProvider, as always
+        Cursor cursor = context.getContentResolver().query(weatherUri, NOTIFY_WEATHER_PROJECTION, null, null, null);
+
+        String highTemp = "";
+        String lowTemp = "";
+
+        if (cursor.moveToFirst()) {
+            //int weatherId = cursor.getInt(INDEX_WEATHER_ID);
+            double high = cursor.getDouble(INDEX_MAX_TEMP);
+            double low = cursor.getDouble(INDEX_MIN_TEMP);
+            //String desc = cursor.getString(INDEX_SHORT_DESC);
+
+
+
+            highTemp = Utility.formatTemperature(context, high);
+
+            lowTemp = Utility.formatTemperature(context, low);
+
+            //System.out.println("highTemp / lowTemp = " + highTemp + "/" + lowTemp);
+
+            Handheld handheld = new Handheld(context);
+            handheld.updateHighLow(highTemp, lowTemp);
+
+        }
+        cursor.close();
+
+
+
+
+
     }
 
     private void notifyWeather() {
