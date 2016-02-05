@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -16,11 +17,22 @@ import android.os.Bundle;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.wearable.watchface.CanvasWatchFaceService;
 import android.text.format.Time;
+import android.util.Log;
 import android.view.SurfaceHolder;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.wearable.Asset;
+import com.google.android.gms.wearable.DataApi;
+import com.google.android.gms.wearable.DataEvent;
+import com.google.android.gms.wearable.DataEventBuffer;
+import com.google.android.gms.wearable.DataMapItem;
 import com.google.android.gms.wearable.Wearable;
+
+import java.io.InputStream;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created by matthiasko on 2/1/16.
@@ -36,7 +48,7 @@ public class WeatherWatchFaceService extends CanvasWatchFaceService {
     }
 
     private class Engine extends CanvasWatchFaceService.Engine
-            implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
+            implements DataApi.DataListener, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
 
         private GoogleApiClient mGoogleApiClient;
 
@@ -53,6 +65,8 @@ public class WeatherWatchFaceService extends CanvasWatchFaceService {
 
         String mHighLowString;
 
+        private static final long TIMEOUT_MS = 100; // is this value OK?
+
 
 
         public class MessageReceiver extends BroadcastReceiver {
@@ -64,6 +78,9 @@ public class WeatherWatchFaceService extends CanvasWatchFaceService {
 
                 mHighLowString = message;
 
+
+
+
                 invalidate(); // call onDraw to refresh display
 
                 System.out.println("message = " + message);
@@ -71,7 +88,51 @@ public class WeatherWatchFaceService extends CanvasWatchFaceService {
         }
 
 
+        @Override
+        public void onDataChanged(DataEventBuffer dataEvents) {
 
+            System.out.println("WeatherWatchFaceService - onDataChanged"); // this is not called
+
+
+            for (DataEvent event : dataEvents) {
+                if (event.getType() == DataEvent.TYPE_CHANGED &&
+                        event.getDataItem().getUri().getPath().equals("/image")) {
+
+
+
+                    DataMapItem dataMapItem = DataMapItem.fromDataItem(event.getDataItem());
+                    Asset profileAsset = dataMapItem.getDataMap().getAsset("weatherImage");
+                    mWeatherConditionDrawable = loadBitmapFromAsset(profileAsset);
+
+
+                    invalidate();
+
+
+                }
+            }
+        }
+
+        public Bitmap loadBitmapFromAsset(Asset asset) {
+            if (asset == null) {
+                throw new IllegalArgumentException("Asset must be non-null");
+            }
+            ConnectionResult result =
+                    mGoogleApiClient.blockingConnect(TIMEOUT_MS, TimeUnit.MILLISECONDS);
+            if (!result.isSuccess()) {
+                return null;
+            }
+            // convert asset into a file descriptor and block until it's ready
+            InputStream assetInputStream = Wearable.DataApi.getFdForAsset(
+                    mGoogleApiClient, asset).await().getInputStream();
+            mGoogleApiClient.disconnect();
+
+            if (assetInputStream == null) {
+                Log.w("WeatherWatchFaceService", "Requested an unknown Asset.");
+                return null;
+            }
+            // decode the stream into a bitmap
+            return BitmapFactory.decodeStream(assetInputStream);
+        }
 
         @Override
         public void onCreate(SurfaceHolder holder) {
@@ -125,6 +186,10 @@ public class WeatherWatchFaceService extends CanvasWatchFaceService {
 
             LocalBroadcastManager.getInstance(WeatherWatchFaceService.this).registerReceiver(messageReceiver, messageFilter);
 
+
+            // create the placeholder image
+            Drawable b = mResources.getDrawable(R.drawable.art_clear);
+            mWeatherConditionDrawable = ((BitmapDrawable) b).getBitmap();
         }
 
         @Override
@@ -147,27 +212,36 @@ public class WeatherWatchFaceService extends CanvasWatchFaceService {
             String text = String.format("%d:%02d", mTime.hour, mTime.minute);
             canvas.drawText(text, bounds.centerX() - mTextXOffset, bounds.centerY() - mTextYOffset - 80, mTextPaint);
 
-            String myDate = "MON, FEB / 01 / 2016";
-            canvas.drawText(myDate, bounds.centerX() - mTextXOffset - 40, bounds.centerY() - mTextYOffset - 40, mDatePaint);
+
+            // get the current date and format properly
+            SimpleDateFormat sdf = new SimpleDateFormat("E, MMM dd, yyyy");
+            String dateString = sdf.format(new Date());
+
+
+
+
+            canvas.drawText(dateString, bounds.centerX() - mTextXOffset - 40, bounds.centerY() - mTextYOffset - 40, mDatePaint);
 
 
             StringBuilder stringBuilder = new StringBuilder();
 
             stringBuilder.append("art_clear");
 
-            String name = stringBuilder.toString();
+            //String name = stringBuilder.toString();
 
             //int id = mResources.getIdentifier(name, "drawable", "com.example.android.sunshine.app"); // check if this is right
 
-            Drawable b = mResources.getDrawable(R.drawable.art_clear);
-            mWeatherConditionDrawable = ((BitmapDrawable) b).getBitmap();
+
+
+
             float sizeScale = (width * 0.25f) / mWeatherConditionDrawable.getWidth(); // change size of image here
-            mWeatherConditionDrawable = Bitmap.createScaledBitmap(mWeatherConditionDrawable, (int) (mWeatherConditionDrawable.getWidth() * sizeScale), (int) (mWeatherConditionDrawable.getHeight() * sizeScale), true);
+            mWeatherConditionDrawable = Bitmap.createScaledBitmap(
+                    mWeatherConditionDrawable,
+                    (int) (mWeatherConditionDrawable.getWidth() * sizeScale),
+                    (int) (mWeatherConditionDrawable.getHeight() * sizeScale),
+                    true);
 
             canvas.drawBitmap(mWeatherConditionDrawable, radius - mWeatherConditionDrawable.getWidth() / 2 - 50 , 0 - yOffset + 150, null);
-
-            // TODO: we need to update this text...
-
 
             canvas.drawText(mHighLowString, radius - mWeatherConditionDrawable.getWidth() / 2 + 50 , 0 - yOffset + 200, mHighLow);
 

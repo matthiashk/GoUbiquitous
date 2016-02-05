@@ -28,27 +28,60 @@ public class ListenerService extends WearableListenerService {
             if (event.getType() == DataEvent.TYPE_CHANGED) {
                 // Check the data path
                 String path = event.getDataItem().getUri().getPath();
-                if (path.equals(WEARABLE_DATA_PATH)) {}
-                dataMap = DataMapItem.fromDataItem(event.getDataItem()).getDataMap();
-                Log.v("myTag", "DataMap received on watch: " + dataMap);
 
-                String highTemp = dataMap.getString("high");
-                String lowTemp = dataMap.getString("low");
+                if (path.equals(WEARABLE_DATA_PATH)) {
 
-                String highLowTemp = highTemp + "/" + lowTemp;
+                    dataMap = DataMapItem.fromDataItem(event.getDataItem()).getDataMap();
+                    Log.v("myTag", "DataMap received on watch: " + dataMap);
+
+                    String highTemp = dataMap.getString("high");
+                    String lowTemp = dataMap.getString("low");
+
+                    String highLowTemp = highTemp + "/" + lowTemp;
 
 
-                //System.out.println("ListenerService - highTemp = " + highTemp);
+                    //System.out.println("ListenerService - highTemp = " + highTemp);
 
-                // get high and low temp and put in message intent so we can update ui
+                    // get high and low temp and put in message intent so we can update ui
 
-                Intent messageIntent = new Intent();
-                messageIntent.setAction(Intent.ACTION_SEND);
-                messageIntent.putExtra("message", highLowTemp);
-                LocalBroadcastManager.getInstance(this).sendBroadcast(messageIntent);
+                    Intent messageIntent = new Intent();
+                    messageIntent.setAction(Intent.ACTION_SEND);
+                    messageIntent.putExtra("message", highLowTemp);
+                    LocalBroadcastManager.getInstance(this).sendBroadcast(messageIntent);
+                }
+
+                if (path.equals("/image")) {
+
+                    System.out.println("IMAGE PATH FOUND");
+
+
+                    /*  cant send asset as extra, use ondatachanged method instead in weatherwatchfaceservice
+
+
+                    DataMapItem dataMapItem = DataMapItem.fromDataItem(event.getDataItem());
+
+                    Asset imageAsset = dataMapItem.getDataMap().getAsset("profileImage");
+
+
+
+
+
+                    Intent messageIntent = new Intent();
+                    messageIntent.setAction(Intent.ACTION_SEND);
+
+                    messageIntent.putExtra("imageAsset", imageAsset);
+                    LocalBroadcastManager.getInstance(this).sendBroadcast(messageIntent);
+
+                    */
+
+
+                }
+
             }
         }
     }
+
+
 
     @Override
     public void onMessageReceived(MessageEvent messageEvent) {

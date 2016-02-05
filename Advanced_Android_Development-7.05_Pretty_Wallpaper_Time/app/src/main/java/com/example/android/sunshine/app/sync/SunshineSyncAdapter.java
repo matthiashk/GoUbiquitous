@@ -395,36 +395,31 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
 
     private void getHighLow() {
 
-        System.out.println("getHighLow ******************");
-
         Context context = getContext();
 
         String locationQuery = Utility.getPreferredLocation(context);
 
         Uri weatherUri = WeatherContract.WeatherEntry.buildWeatherLocationWithDate(locationQuery, System.currentTimeMillis());
 
-        // we'll query our contentProvider, as always
         Cursor cursor = context.getContentResolver().query(weatherUri, NOTIFY_WEATHER_PROJECTION, null, null, null);
 
-        String highTemp = "";
-        String lowTemp = "";
-
         if (cursor.moveToFirst()) {
-            //int weatherId = cursor.getInt(INDEX_WEATHER_ID);
+
+            int weatherId = cursor.getInt(INDEX_WEATHER_ID); // needed to get weather image
             double high = cursor.getDouble(INDEX_MAX_TEMP);
             double low = cursor.getDouble(INDEX_MIN_TEMP);
-            //String desc = cursor.getString(INDEX_SHORT_DESC);
 
 
+            String highTemp = Utility.formatTemperature(context, high);
 
-            highTemp = Utility.formatTemperature(context, high);
-
-            lowTemp = Utility.formatTemperature(context, low);
+            String lowTemp = Utility.formatTemperature(context, low);
 
             //System.out.println("highTemp / lowTemp = " + highTemp + "/" + lowTemp);
 
             Handheld handheld = new Handheld(context);
-            handheld.updateHighLow(highTemp, lowTemp);
+            handheld.updateHighLow(highTemp, lowTemp, weatherId);
+
+
 
         }
         cursor.close();

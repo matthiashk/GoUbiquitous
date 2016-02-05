@@ -1,16 +1,22 @@
 package com.example.android.sunshine.app;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.util.Log;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.PendingResult;
+import com.google.android.gms.wearable.Asset;
 import com.google.android.gms.wearable.DataApi;
 import com.google.android.gms.wearable.DataMap;
 import com.google.android.gms.wearable.PutDataMapRequest;
 import com.google.android.gms.wearable.PutDataRequest;
 import com.google.android.gms.wearable.Wearable;
+
+import java.io.ByteArrayOutputStream;
 
 /**
  * Created by matthiasko on 2/2/16.
@@ -23,10 +29,15 @@ public class Handheld implements
 
     String mHighTemp;
     String mLowTemp;
+    Bitmap mWeatherIcon;
+
+    private Context mContext;
 
 
 
     public Handheld(Context context) {
+
+        mContext = context;
 
         googleClient = new GoogleApiClient.Builder(context)
                 .addApi(Wearable.API)
@@ -45,9 +56,15 @@ public class Handheld implements
 
     }
 
+    private static Asset createAssetFromBitmap(Bitmap bitmap) {
+        final ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
+        bitmap.compress(Bitmap.CompressFormat.PNG, 100, byteStream);
+        return Asset.createFromBytes(byteStream.toByteArray());
+    }
 
 
-    public void updateHighLow(String highTemp, String lowTemp) {
+
+    public void updateHighLow(String highTemp, String lowTemp, int weatherId) {
 
 
         mHighTemp = highTemp;
@@ -55,6 +72,37 @@ public class Handheld implements
 
         System.out.println("Handheld - highTemp = " + highTemp);
         System.out.println("Handheld - lowTemp = " + lowTemp);
+        System.out.println("Handheld - weatherId = " + weatherId);
+
+        // TODO: use weatherId to send correct asset to wear app...
+
+        // convert the drawable icon to bitmap
+
+        mWeatherIcon = BitmapFactory.decodeResource(mContext.getResources(),
+                Utility.getArtResourceForWeatherCondition(weatherId));
+
+
+
+/*
+        Asset asset = createAssetFromBitmap(mWeatherIcon);
+        PutDataRequest request = PutDataRequest.create("/image").setUrgent();
+        request.putAsset("weatherImage", asset);
+
+        Wearable.DataApi.putDataItem(googleClient, request);
+*/
+
+        Asset asset = createAssetFromBitmap(mWeatherIcon);
+
+        PutDataMapRequest dataMap = PutDataMapRequest.create("/image");
+        dataMap.getDataMap().putAsset("weatherImage", asset);
+        dataMap.getDataMap().putLong("timestamp", System.currentTimeMillis());
+        PutDataRequest request = dataMap.asPutDataRequest();
+        PendingResult<DataApi.DataItemResult> pendingResult = Wearable.DataApi
+                .putDataItem(googleClient, request);
+
+
+
+
     }
 
 
@@ -66,8 +114,6 @@ public class Handheld implements
     public void onConnected(Bundle connectionHint) {
 
         String WEARABLE_DATA_PATH = "/wearable_data";
-
-        // TODO: send high low data here...
 
         // Create a DataMap object and send it to the data layer
         DataMap dataMap = new DataMap();
