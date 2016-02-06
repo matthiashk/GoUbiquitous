@@ -21,8 +21,7 @@ import java.io.ByteArrayOutputStream;
 /**
  * Created by matthiasko on 2/2/16.
  */
-public class Handheld implements
-        GoogleApiClient.ConnectionCallbacks,
+public class Handheld implements GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener {
 
     private GoogleApiClient googleClient;
@@ -33,8 +32,6 @@ public class Handheld implements
     int mWeatherId;
 
     private Context mContext;
-
-
 
     public Handheld(Context context) {
 
@@ -53,8 +50,7 @@ public class Handheld implements
         if (null != googleClient && googleClient.isConnected()) {
             googleClient.disconnect();
         }
-         */
-
+        */
     }
 
     private static Asset createAssetFromBitmap(Bitmap bitmap) {
@@ -63,10 +59,7 @@ public class Handheld implements
         return Asset.createFromBytes(byteStream.toByteArray());
     }
 
-
-
     public void updateHighLow(String highTemp, String lowTemp, int weatherId) {
-
 
         mHighTemp = highTemp;
         mLowTemp = lowTemp;
@@ -76,56 +69,28 @@ public class Handheld implements
         //System.out.println("Handheld - lowTemp = " + lowTemp);
         System.out.println("Handheld - weatherId = " + weatherId);
 
-        // TODO: use weatherId to send correct asset to wear app...
+        // use weatherId to send correct asset to wear app
 
         // convert the drawable icon to bitmap
-
         mWeatherIcon = BitmapFactory.decodeResource(mContext.getResources(),
                 Utility.getIconResourceForWeatherCondition(weatherId));
 
-        //int byteCount = mWeatherIcon.getAllocationByteCount();
-
-        //System.out.println("allocation byteCount = " + byteCount);
-
-
-        /*
-        Asset asset = createAssetFromBitmap(mWeatherIcon);
-        PutDataRequest request = PutDataRequest.create("/image").setUrgent();
-        request.putAsset("weatherImage", asset);
-
-        Wearable.DataApi.putDataItem(googleClient, request);
-        */
+        // create asset from the bitmap/drawable so we can send through the data layer to our
+        // wear app
 
         Asset asset = createAssetFromBitmap(mWeatherIcon);
 
-        PutDataMapRequest dataMap = PutDataMapRequest.create("/image").setUrgent(); // use setUrgent() to properly update image?
+        // use setUrgent() to update image faster for google play service 8.3.0+
+        PutDataMapRequest dataMap = PutDataMapRequest.create("/image").setUrgent();
         dataMap.getDataMap().putAsset("weatherImage", asset);
+
+        // we need to use a timestamp, otherwise onDataChanged will not be called
+        // we should test this
         dataMap.getDataMap().putLong("timestamp", System.currentTimeMillis());
         PutDataRequest request = dataMap.asPutDataRequest();
         PendingResult<DataApi.DataItemResult> pendingResult = Wearable.DataApi
                 .putDataItem(googleClient, request);
-
-
-
-        /*
-        pendingResult.setResultCallback(new ResultCallback<DataApi.DataItemResult>() {
-            @Override
-            public void onResult(DataApi.DataItemResult dataItemResult) {
-                Log.i("", "data send status:" + dataItemResult.getStatus());
-                //callback.handleMessage(null);
-            }
-        });
-        */
-
-        //System.out.println("Handheld - updateHighLow");
-
-
-
-
     }
-
-
-
 
     // Send a data object when the data layer connection is successful.
 
@@ -139,24 +104,14 @@ public class Handheld implements
         dataMap.putString("high", mHighTemp);
         dataMap.putString("low", mLowTemp);
 
-        // we are just using the weatherId to check that the correct image is showing up
-        // on the wear app
+        // we are just using the weatherId here to check that the correct image is showing up
+        // on the wear app (using logs to see if the weatherId matches the image)
 
         dataMap.putInt("weatherId", mWeatherId);
-
-        /*
-        dataMap.putLong("time", new Date().getTime());
-        dataMap.putString("hole", "1");
-        dataMap.putString("front", "250");
-        dataMap.putString("middle", "260");
-        dataMap.putString("back", "270");
-        */
-
 
         //Requires a new thread to avoid blocking the UI
         new SendToDataLayerThread(WEARABLE_DATA_PATH, dataMap).start();
     }
-
 
     // Placeholders for required connection callbacks
     @Override
@@ -164,8 +119,6 @@ public class Handheld implements
 
     @Override
     public void onConnectionFailed(ConnectionResult connectionResult) { }
-
-
 
     class SendToDataLayerThread extends Thread {
         String path;
@@ -190,10 +143,6 @@ public class Handheld implements
                 // Log an error
                 Log.v("myTag", "ERROR: failed to send DataMap to data layer");
             }
-
-
         }
     }
-
-
 }

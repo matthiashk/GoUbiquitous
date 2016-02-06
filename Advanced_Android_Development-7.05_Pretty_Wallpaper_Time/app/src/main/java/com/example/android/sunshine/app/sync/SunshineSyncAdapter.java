@@ -92,15 +92,6 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
         super(context, autoInitialize);
     }
 
-
-
-
-
-
-
-
-
-
     @Override
     public void onPerformSync(Account account, Bundle extras, String authority, ContentProviderClient provider, SyncResult syncResult) {
         Log.d(LOG_TAG, "Starting sync");
@@ -388,10 +379,10 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
     }
 
     /*
-        Get high and low temperatures for the Android Wear app
+        Get high and low temperatures and send to Handheld class
+        Handheld class will send this data along with image (using weatherId) to wear app
 
-
-     */
+    */
 
     private void getHighLow() {
 
@@ -409,7 +400,6 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
             double high = cursor.getDouble(INDEX_MAX_TEMP);
             double low = cursor.getDouble(INDEX_MIN_TEMP);
 
-
             String highTemp = Utility.formatTemperature(context, high);
 
             String lowTemp = Utility.formatTemperature(context, low);
@@ -418,16 +408,8 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
 
             Handheld handheld = new Handheld(context);
             handheld.updateHighLow(highTemp, lowTemp, weatherId);
-
-
-
         }
         cursor.close();
-
-
-
-
-
     }
 
     private void notifyWeather() {

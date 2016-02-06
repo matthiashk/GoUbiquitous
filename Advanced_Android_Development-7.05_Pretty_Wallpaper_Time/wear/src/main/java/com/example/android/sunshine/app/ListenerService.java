@@ -8,13 +8,18 @@ import com.google.android.gms.wearable.DataEvent;
 import com.google.android.gms.wearable.DataEventBuffer;
 import com.google.android.gms.wearable.DataMap;
 import com.google.android.gms.wearable.DataMapItem;
-import com.google.android.gms.wearable.MessageEvent;
 import com.google.android.gms.wearable.WearableListenerService;
 
 /**
  * Created by matthiasko on 2/2/16.
  */
 public class ListenerService extends WearableListenerService {
+
+    /*
+        The ListenerService class will respond to onDataChanged when data is sent from mobile app
+        Then we can send that data to our WeatherWatchFaceService class
+
+    */
 
     private static final String WEARABLE_DATA_PATH = "/wearable_data";
 
@@ -43,72 +48,16 @@ public class ListenerService extends WearableListenerService {
 
                     String highLowTemp = highTemp + "/" + lowTemp;
 
-
                     //System.out.println("ListenerService - highTemp = " + highTemp);
 
                     // get high and low temp and put in message intent so we can update ui
-
+                    // from WeatherWatchFaceService
                     Intent messageIntent = new Intent();
                     messageIntent.setAction(Intent.ACTION_SEND);
                     messageIntent.putExtra("message", highLowTemp);
                     LocalBroadcastManager.getInstance(this).sendBroadcast(messageIntent);
                 }
-
-                if (path.equals("/image")) {
-
-                    // TODO: create a calllback so we can send the image from here instead???
-
-                    //System.out.println("ListenerService - IMAGE PATH FOUND");
-
-
-                    //  cant send asset as extra, use ondatachanged method instead in weatherwatchfaceservice
-
-
-                    //DataMapItem dataMapItem = DataMapItem.fromDataItem(event.getDataItem());
-
-                    //Asset imageAsset = dataMapItem.getDataMap().getAsset("profileImage");
-
-
-
-
-
-                    /*
-                    Intent messageIntent = new Intent();
-                    messageIntent.setAction(Intent.ACTION_SEND);
-
-                    messageIntent.putExtra("imageAsset", imageAsset);
-                    LocalBroadcastManager.getInstance(this).sendBroadcast(messageIntent);
-
-                    */
-
-
-                }
-
             }
         }
     }
-
-
-
-    @Override
-    public void onMessageReceived(MessageEvent messageEvent) {
-
-        /*
-        System.out.println("onMessageReceived ***************");
-
-        if (messageEvent.getPath().equals(WEARABLE_DATA_PATH)) {
-            final String message = new String(messageEvent.getData());
-
-            // Broadcast message to wearable activity for display
-            Intent messageIntent = new Intent();
-            messageIntent.setAction(Intent.ACTION_SEND);
-            messageIntent.putExtra("message", message);
-            LocalBroadcastManager.getInstance(this).sendBroadcast(messageIntent);
-        } else {
-            super.onMessageReceived(messageEvent);
-        }
-        */
-    }
-
-
 }

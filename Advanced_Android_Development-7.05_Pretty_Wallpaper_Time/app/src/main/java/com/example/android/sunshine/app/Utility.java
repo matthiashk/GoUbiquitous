@@ -220,17 +220,17 @@ public class Utility {
         } else if (weatherId >= 520 && weatherId <= 531) {
             return R.drawable.ic_rain;
         } else if (weatherId >= 600 && weatherId <= 622) {
-            System.out.println("Utility - IMAGE -> SNOW");
+            //System.out.println("Utility - IMAGE -> SNOW");
             return R.drawable.ic_snow;
         } else if (weatherId >= 701 && weatherId <= 761) {
             return R.drawable.ic_fog;
         } else if (weatherId == 761 || weatherId == 781) {
             return R.drawable.ic_storm;
         } else if (weatherId == 800) {
-            System.out.println("Utility - IMAGE -> CLEAR");
+            //System.out.println("Utility - IMAGE -> CLEAR");
             return R.drawable.ic_clear;
         } else if (weatherId == 801) {
-            System.out.println("Utility - IMAGE -> LIGHT CLOUDS");
+            //System.out.println("Utility - IMAGE -> LIGHT CLOUDS");
             return R.drawable.ic_light_clouds;
         } else if (weatherId >= 802 && weatherId <= 804) {
             return R.drawable.ic_cloudy;

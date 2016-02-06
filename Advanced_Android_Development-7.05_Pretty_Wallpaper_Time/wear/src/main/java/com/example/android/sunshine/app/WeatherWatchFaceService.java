@@ -56,48 +56,29 @@ public class WeatherWatchFaceService extends CanvasWatchFaceService {
         Paint mTextPaint;
         Float mTextXOffset;
         Float mTextYOffset;
-
         Time mTime;
         Paint mBackgroundPaint;
-
         Paint mDatePaint;
-
         Paint mHighLow;
-
         String mHighLowString;
-
-        private static final long TIMEOUT_MS = 100; // is this value OK?
-
-
 
         public class MessageReceiver extends BroadcastReceiver {
             @Override
             public void onReceive(Context context, Intent intent) {
                 String message = intent.getStringExtra("message");
-                // Display message in UI
-                //mTextView.setText(message);
 
                 mHighLowString = message;
 
-
-
-
                 invalidate(); // call onDraw to refresh display
 
-                System.out.println("message = " + message);
+                //System.out.println("message = " + message);
             }
         }
-
 
         @Override
         public void onDataChanged(DataEventBuffer dataEvents) {
 
-            //Wearable.DataApi.addListener(mGoogleApiClient, this);
-
             System.out.println("WeatherWatchFaceService - onDataChanged");
-
-
-
 
             for (DataEvent event : dataEvents) {
 
@@ -107,41 +88,21 @@ public class WeatherWatchFaceService extends CanvasWatchFaceService {
                 if (event.getType() == DataEvent.TYPE_CHANGED &&
                         event.getDataItem().getUri().getPath().equals("/image")) {
 
-
-                    // this block only gets called once?
-                    // TODO : find out why this only runs once...
-
-
                     DataMapItem dataMapItem = DataMapItem.fromDataItem(event.getDataItem());
                     Asset profileAsset = dataMapItem.getDataMap().getAsset("weatherImage");
                     loadBitmapFromAsset(profileAsset);
 
-                    //Wearable.DataApi.deleteDataItems(mGoogleApiClient, dataMapItem.getUri());
-
-
-                    //int iconHeight = mWeatherConditionDrawable.getHeight();
-                    //int iconWidth = mWeatherConditionDrawable.getWidth();
-
-                    //System.out.println("iconHeight = " + iconHeight);
-                    //System.out.println("iconWidth = " + iconWidth);
-
-
-                    invalidate();
-
-
+                    invalidate(); // call onDraw to refresh display
                 }
             }
         }
 
-
         /*
-
             using asynctask to run blockingConnect, otherwise app crashed under google play services above 7.4.0
 
-         */
+        */
 
         public void loadBitmapFromAsset(final Asset asset) {
-
 
             if (asset == null) {
                 throw new IllegalArgumentException("Asset must be non-null");
@@ -152,8 +113,7 @@ public class WeatherWatchFaceService extends CanvasWatchFaceService {
                 protected Bitmap doInBackground(Asset... assets) {
 
                     ConnectionResult result =
-                            mGoogleApiClient.blockingConnect(
-                                    1000, TimeUnit.MILLISECONDS);
+                            mGoogleApiClient.blockingConnect(1000, TimeUnit.MILLISECONDS);
                     if (!result.isSuccess()) {
                         return null;
                     }
@@ -177,51 +137,15 @@ public class WeatherWatchFaceService extends CanvasWatchFaceService {
                     if (bitmap != null) {
 
                         mWeatherConditionDrawable = bitmap;
-
                         //target.setImageBitmap(bitmap);
                     }
                 }
             }.execute(asset);
-
-
         }
-
-
-
-        /*
-        public Bitmap loadBitmapFromAsset(Asset asset) {
-
-            if (asset == null) {
-                throw new IllegalArgumentException("Asset must be non-null");
-            }
-
-            ConnectionResult result =
-                    mGoogleApiClient.blockingConnect(TIMEOUT_MS, TimeUnit.MILLISECONDS);
-
-            if (!result.isSuccess()) {
-                return null;
-            }
-
-            // convert asset into a file descriptor and block until it's ready
-            InputStream assetInputStream = Wearable.DataApi.getFdForAsset(
-                    mGoogleApiClient, asset).await().getInputStream();
-            mGoogleApiClient.disconnect();
-
-            if (assetInputStream == null) {
-                Log.w("WeatherWatchFaceService", "Requested an unknown Asset.");
-                return null;
-            }
-
-            // decode the stream into a bitmap
-            return BitmapFactory.decodeStream(assetInputStream);
-        }
-        */
 
         @Override
         public void onCreate(SurfaceHolder holder) {
             super.onCreate(holder);
-
-            //System.out.println("onCreate **********************");
 
             // Create a GoogleApiClient instance
             mGoogleApiClient = new GoogleApiClient.Builder(WeatherWatchFaceService.this)
@@ -263,14 +187,11 @@ public class WeatherWatchFaceService extends CanvasWatchFaceService {
 
             mHighLowString = "15 / 32";
 
-
-
             // register for messages from the mobile app
             IntentFilter messageFilter = new IntentFilter(Intent.ACTION_SEND);
             MessageReceiver messageReceiver = new MessageReceiver();
 
             LocalBroadcastManager.getInstance(WeatherWatchFaceService.this).registerReceiver(messageReceiver, messageFilter);
-
 
             // create the placeholder image
             Drawable b = mResources.getDrawable(R.drawable.art_clear);
@@ -280,9 +201,7 @@ public class WeatherWatchFaceService extends CanvasWatchFaceService {
         @Override
         public void onDraw(Canvas canvas, Rect bounds) {
 
-            System.out.println("WeatherWatchFaceService - onDraw");
-
-
+            //System.out.println("WeatherWatchFaceService - onDraw");
             int width = bounds.width();
             int height = bounds.height();
             float radius = width / 2;
@@ -297,16 +216,11 @@ public class WeatherWatchFaceService extends CanvasWatchFaceService {
             String text = String.format("%d:%02d", mTime.hour, mTime.minute);
             canvas.drawText(text, bounds.centerX() - mTextXOffset, bounds.centerY() - mTextYOffset - 80, mTextPaint);
 
-
             // get the current date and format properly
             SimpleDateFormat sdf = new SimpleDateFormat("E, MMM dd, yyyy");
             String dateString = sdf.format(new Date());
 
-
-
-
             canvas.drawText(dateString, bounds.centerX() - mTextXOffset - 40, bounds.centerY() - mTextYOffset - 40, mDatePaint);
-
 
             StringBuilder stringBuilder = new StringBuilder();
 
@@ -315,9 +229,6 @@ public class WeatherWatchFaceService extends CanvasWatchFaceService {
             //String name = stringBuilder.toString();
 
             //int id = mResources.getIdentifier(name, "drawable", "com.example.android.sunshine.app"); // check if this is right
-
-
-
 
             float sizeScale = (width * 0.25f) / mWeatherConditionDrawable.getWidth(); // change size of image here
 
@@ -332,17 +243,13 @@ public class WeatherWatchFaceService extends CanvasWatchFaceService {
             canvas.drawBitmap(mWeatherConditionDrawable, radius - mWeatherConditionDrawable.getWidth() / 2 - 50 , 0 - yOffset + 150, null);
 
             canvas.drawText(mHighLowString, radius - mWeatherConditionDrawable.getWidth() / 2 + 50 , 0 - yOffset + 200, mHighLow);
-
         }
 
         @Override
         public void onConnected(Bundle connectionHint) {
-            // Connected to Google Play services!
-            // The good stuff goes here.
 
             System.out.println("WeatherWatchFaceService - onConnected");
-
-            Wearable.DataApi.addListener(mGoogleApiClient, this);
+            Wearable.DataApi.addListener(mGoogleApiClient, this); // addListener so we can respond to onDataChanged
         }
 
         @Override
@@ -365,11 +272,8 @@ public class WeatherWatchFaceService extends CanvasWatchFaceService {
             super.onVisibilityChanged(visible);
 
             if (visible) {
-
-                System.out.println("WeatherWatchFaceService - onVisibilityChanged");
+                //System.out.println("WeatherWatchFaceService - onVisibilityChanged");
             }
-
-
         }
 
         @Override
@@ -382,6 +286,4 @@ public class WeatherWatchFaceService extends CanvasWatchFaceService {
             super.onDestroy();
         }
     }
-
-
 }
