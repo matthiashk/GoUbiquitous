@@ -37,6 +37,10 @@ public class ListenerService extends WearableListenerService {
                     String highTemp = dataMap.getString("high");
                     String lowTemp = dataMap.getString("low");
 
+                    int weatherId = dataMap.getInt("weatherId");
+
+                    System.out.println("ListenerService - weatherId = " + weatherId);
+
                     String highLowTemp = highTemp + "/" + lowTemp;
 
 
@@ -52,20 +56,23 @@ public class ListenerService extends WearableListenerService {
 
                 if (path.equals("/image")) {
 
-                    System.out.println("IMAGE PATH FOUND");
+                    // TODO: create a calllback so we can send the image from here instead???
+
+                    //System.out.println("ListenerService - IMAGE PATH FOUND");
 
 
-                    /*  cant send asset as extra, use ondatachanged method instead in weatherwatchfaceservice
+                    //  cant send asset as extra, use ondatachanged method instead in weatherwatchfaceservice
 
 
-                    DataMapItem dataMapItem = DataMapItem.fromDataItem(event.getDataItem());
+                    //DataMapItem dataMapItem = DataMapItem.fromDataItem(event.getDataItem());
 
-                    Asset imageAsset = dataMapItem.getDataMap().getAsset("profileImage");
-
-
+                    //Asset imageAsset = dataMapItem.getDataMap().getAsset("profileImage");
 
 
 
+
+
+                    /*
                     Intent messageIntent = new Intent();
                     messageIntent.setAction(Intent.ACTION_SEND);
 

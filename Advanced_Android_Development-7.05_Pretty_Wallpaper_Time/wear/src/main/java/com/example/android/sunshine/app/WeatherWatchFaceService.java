@@ -13,6 +13,7 @@ import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.wearable.watchface.CanvasWatchFaceService;
@@ -91,18 +92,38 @@ public class WeatherWatchFaceService extends CanvasWatchFaceService {
         @Override
         public void onDataChanged(DataEventBuffer dataEvents) {
 
-            System.out.println("WeatherWatchFaceService - onDataChanged"); // this is not called
+            //Wearable.DataApi.addListener(mGoogleApiClient, this);
+
+            System.out.println("WeatherWatchFaceService - onDataChanged");
+
+
 
 
             for (DataEvent event : dataEvents) {
+
+                System.out.println("WeatherWatchFaceService - onDataChanged - start FOR loop");
+
+
                 if (event.getType() == DataEvent.TYPE_CHANGED &&
                         event.getDataItem().getUri().getPath().equals("/image")) {
 
 
+                    // this block only gets called once?
+                    // TODO : find out why this only runs once...
+
 
                     DataMapItem dataMapItem = DataMapItem.fromDataItem(event.getDataItem());
                     Asset profileAsset = dataMapItem.getDataMap().getAsset("weatherImage");
-                    mWeatherConditionDrawable = loadBitmapFromAsset(profileAsset);
+                    loadBitmapFromAsset(profileAsset);
+
+                    //Wearable.DataApi.deleteDataItems(mGoogleApiClient, dataMapItem.getUri());
+
+
+                    //int iconHeight = mWeatherConditionDrawable.getHeight();
+                    //int iconWidth = mWeatherConditionDrawable.getWidth();
+
+                    //System.out.println("iconHeight = " + iconHeight);
+                    //System.out.println("iconWidth = " + iconWidth);
 
 
                     invalidate();
@@ -112,15 +133,75 @@ public class WeatherWatchFaceService extends CanvasWatchFaceService {
             }
         }
 
-        public Bitmap loadBitmapFromAsset(Asset asset) {
+
+        /*
+
+            using asynctask to run blockingConnect, otherwise app crashed under google play services above 7.4.0
+
+         */
+
+        public void loadBitmapFromAsset(final Asset asset) {
+
+
             if (asset == null) {
                 throw new IllegalArgumentException("Asset must be non-null");
             }
+
+            new AsyncTask<Asset, Void, Bitmap>() {
+                @Override
+                protected Bitmap doInBackground(Asset... assets) {
+
+                    ConnectionResult result =
+                            mGoogleApiClient.blockingConnect(
+                                    1000, TimeUnit.MILLISECONDS);
+                    if (!result.isSuccess()) {
+                        return null;
+                    }
+
+                    // convert asset into a file descriptor and block until it's ready
+                    InputStream assetInputStream = Wearable.DataApi.getFdForAsset(
+                            mGoogleApiClient, assets[0]).await().getInputStream();
+                    //mGoogleApiClient.disconnect(); <-- this was causing onDataChanged to only be called on app start!!
+
+                    if (assetInputStream == null) {
+                        Log.w("WeatherWatchFaceService", "Requested an unknown Asset.");
+                        return null;
+                    }
+
+                    // decode the stream into a bitmap
+                    return BitmapFactory.decodeStream(assetInputStream);
+                }
+
+                @Override
+                protected void onPostExecute(Bitmap bitmap) {
+                    if (bitmap != null) {
+
+                        mWeatherConditionDrawable = bitmap;
+
+                        //target.setImageBitmap(bitmap);
+                    }
+                }
+            }.execute(asset);
+
+
+        }
+
+
+
+        /*
+        public Bitmap loadBitmapFromAsset(Asset asset) {
+
+            if (asset == null) {
+                throw new IllegalArgumentException("Asset must be non-null");
+            }
+
             ConnectionResult result =
                     mGoogleApiClient.blockingConnect(TIMEOUT_MS, TimeUnit.MILLISECONDS);
+
             if (!result.isSuccess()) {
                 return null;
             }
+
             // convert asset into a file descriptor and block until it's ready
             InputStream assetInputStream = Wearable.DataApi.getFdForAsset(
                     mGoogleApiClient, asset).await().getInputStream();
@@ -130,9 +211,11 @@ public class WeatherWatchFaceService extends CanvasWatchFaceService {
                 Log.w("WeatherWatchFaceService", "Requested an unknown Asset.");
                 return null;
             }
+
             // decode the stream into a bitmap
             return BitmapFactory.decodeStream(assetInputStream);
         }
+        */
 
         @Override
         public void onCreate(SurfaceHolder holder) {
@@ -147,6 +230,8 @@ public class WeatherWatchFaceService extends CanvasWatchFaceService {
                     .addConnectionCallbacks(this)
                     .addOnConnectionFailedListener(this)
                     .build();
+
+            mGoogleApiClient.connect();
 
             mResources = WeatherWatchFaceService.this.getResources();
 
@@ -195,7 +280,7 @@ public class WeatherWatchFaceService extends CanvasWatchFaceService {
         @Override
         public void onDraw(Canvas canvas, Rect bounds) {
 
-            //System.out.println("onDraw **********************");
+            System.out.println("WeatherWatchFaceService - onDraw");
 
 
             int width = bounds.width();
@@ -235,6 +320,9 @@ public class WeatherWatchFaceService extends CanvasWatchFaceService {
 
 
             float sizeScale = (width * 0.25f) / mWeatherConditionDrawable.getWidth(); // change size of image here
+
+            //System.out.println("WeatherWatchFaceService - onDraw - sizeScale = " + sizeScale);
+
             mWeatherConditionDrawable = Bitmap.createScaledBitmap(
                     mWeatherConditionDrawable,
                     (int) (mWeatherConditionDrawable.getWidth() * sizeScale),
@@ -251,6 +339,10 @@ public class WeatherWatchFaceService extends CanvasWatchFaceService {
         public void onConnected(Bundle connectionHint) {
             // Connected to Google Play services!
             // The good stuff goes here.
+
+            System.out.println("WeatherWatchFaceService - onConnected");
+
+            Wearable.DataApi.addListener(mGoogleApiClient, this);
         }
 
         @Override
@@ -274,10 +366,22 @@ public class WeatherWatchFaceService extends CanvasWatchFaceService {
 
             if (visible) {
 
-                System.out.println("onVisibilityChanged");
+                System.out.println("WeatherWatchFaceService - onVisibilityChanged");
             }
 
 
         }
+
+        @Override
+        public void onDestroy() {
+
+            if (null != mGoogleApiClient && mGoogleApiClient.isConnected()) {
+                Wearable.DataApi.removeListener(mGoogleApiClient, this);
+                mGoogleApiClient.disconnect();
+            }
+            super.onDestroy();
+        }
     }
+
+
 }

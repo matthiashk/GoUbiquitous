@@ -30,6 +30,7 @@ public class Handheld implements
     String mHighTemp;
     String mLowTemp;
     Bitmap mWeatherIcon;
+    int mWeatherId;
 
     private Context mContext;
 
@@ -69,9 +70,10 @@ public class Handheld implements
 
         mHighTemp = highTemp;
         mLowTemp = lowTemp;
+        mWeatherId = weatherId;
 
-        System.out.println("Handheld - highTemp = " + highTemp);
-        System.out.println("Handheld - lowTemp = " + lowTemp);
+        //System.out.println("Handheld - highTemp = " + highTemp);
+        //System.out.println("Handheld - lowTemp = " + lowTemp);
         System.out.println("Handheld - weatherId = " + weatherId);
 
         // TODO: use weatherId to send correct asset to wear app...
@@ -79,26 +81,43 @@ public class Handheld implements
         // convert the drawable icon to bitmap
 
         mWeatherIcon = BitmapFactory.decodeResource(mContext.getResources(),
-                Utility.getArtResourceForWeatherCondition(weatherId));
+                Utility.getIconResourceForWeatherCondition(weatherId));
+
+        //int byteCount = mWeatherIcon.getAllocationByteCount();
+
+        //System.out.println("allocation byteCount = " + byteCount);
 
 
-
-/*
+        /*
         Asset asset = createAssetFromBitmap(mWeatherIcon);
         PutDataRequest request = PutDataRequest.create("/image").setUrgent();
         request.putAsset("weatherImage", asset);
 
         Wearable.DataApi.putDataItem(googleClient, request);
-*/
+        */
 
         Asset asset = createAssetFromBitmap(mWeatherIcon);
 
-        PutDataMapRequest dataMap = PutDataMapRequest.create("/image");
+        PutDataMapRequest dataMap = PutDataMapRequest.create("/image").setUrgent(); // use setUrgent() to properly update image?
         dataMap.getDataMap().putAsset("weatherImage", asset);
         dataMap.getDataMap().putLong("timestamp", System.currentTimeMillis());
         PutDataRequest request = dataMap.asPutDataRequest();
         PendingResult<DataApi.DataItemResult> pendingResult = Wearable.DataApi
                 .putDataItem(googleClient, request);
+
+
+
+        /*
+        pendingResult.setResultCallback(new ResultCallback<DataApi.DataItemResult>() {
+            @Override
+            public void onResult(DataApi.DataItemResult dataItemResult) {
+                Log.i("", "data send status:" + dataItemResult.getStatus());
+                //callback.handleMessage(null);
+            }
+        });
+        */
+
+        //System.out.println("Handheld - updateHighLow");
 
 
 
@@ -120,6 +139,11 @@ public class Handheld implements
         dataMap.putString("high", mHighTemp);
         dataMap.putString("low", mLowTemp);
 
+        // we are just using the weatherId to check that the correct image is showing up
+        // on the wear app
+
+        dataMap.putInt("weatherId", mWeatherId);
+
         /*
         dataMap.putLong("time", new Date().getTime());
         dataMap.putString("hole", "1");
@@ -127,6 +151,7 @@ public class Handheld implements
         dataMap.putString("middle", "260");
         dataMap.putString("back", "270");
         */
+
 
         //Requires a new thread to avoid blocking the UI
         new SendToDataLayerThread(WEARABLE_DATA_PATH, dataMap).start();
