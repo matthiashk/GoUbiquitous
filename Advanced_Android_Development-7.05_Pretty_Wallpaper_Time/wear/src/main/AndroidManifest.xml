@@ -38,7 +38,7 @@
 
         <service
             android:name=".WeatherWatchFaceService"
-            android:label="Weather"
+            android:label="GoUbiquitous"
             android:allowEmbedded="true"
             android:permission="android.permission.BIND_WALLPAPER" >
             <meta-data
